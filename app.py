@@ -49,9 +49,9 @@ FESTIVE_SEASONS = ["White Friday", "DSF", "Ramadan", "Back to School"]
 # learn the colours once and can read every chart faster.
 CATEGORY_COLORS = {
     "Fresh": "#2E9E5B",
-    "Grocery": "#E0A526",
-    "Fashion": "#C2408A",
-    "Home Decor": "#2A9D8F",
+    "Grocery": "#1B5E20",
+    "Fashion": "#7E57C2",
+    "Home Decor": "#808080",
     "Electronics": "#3A6FD8",
     "Furniture": "#8C5A3C",
 }
@@ -307,7 +307,7 @@ def emirate_heatmap_card():
             grid, aspect="auto",
             text_auto=".1f" if is_margin else ".3s",
             # Margin can be negative, so use red-yellow-green centred on 0
-            color_continuous_scale="RdYlGn" if is_margin else "Greens",
+            color_continuous_scale="RdYlGn" if is_margin else "Reds",
             color_continuous_midpoint=0 if is_margin else None,
             labels=dict(x="", y="", color=""),
         )
@@ -339,9 +339,11 @@ def trend_card():
         data = data.assign(Period=data["Date"].dt.to_period(freq).dt.start_time)
 
         summary = summarise(data, ["Period", "Category"] if split else "Period", metric)
-        fig = px.line(summary, x="Period", y=metric, markers=grain != "Daily",
-                      color="Category" if split else None, category_orders={"Category": CATEGORIES},
-                      color_discrete_map=CATEGORY_COLORS, color_discrete_sequence=["#34495E"])
+        fig = px.bar(summary, x="Period", y=metric,
+                      color="Category" if split else None,
+                      barmode="group" if split else "relative",
+                      category_orders={"Category": CATEGORIES},
+                      color_discrete_map=CATEGORY_COLORS, text_auto=".3s")
         fig.update_layout(xaxis_title=None)
 
         if show_seasons:
@@ -376,8 +378,11 @@ def mix_card():
 
         column = "Sales_Channel" if view == "Sales channel" else "Payment_Method"
         summary = summarise(data, column, metric)
+        channel_colors = {"In-store": "#E53935", "Online": "#FB8C00", "Click & Collect": "#FDD835"}
         fig = px.pie(summary, names=column, values=metric, hole=0.55,
-                     color_discrete_sequence=OTHER_COLORS)
+                     color=column if view == "Sales channel" else None,
+                     color_discrete_map=channel_colors if view == "Sales channel" else None,
+                     color_discrete_sequence=OTHER_COLORS if view != "Sales channel" else None)
         fig.update_traces(textinfo="percent", sort=True)
         st.plotly_chart(style(fig), key="chart_mix")
 
@@ -548,11 +553,9 @@ kpi_row()
 # ---- Charts: two per row, wide charts get the full row ----
 left, right = st.columns(2)
 with left:
-    sales_by_category_card()
+    trend_card()
 with right:
     emirate_heatmap_card()
-
-trend_card()
 
 left, right = st.columns(2)
 with left:
@@ -562,6 +565,11 @@ with right:
 
 left, right = st.columns(2)
 with left:
+    customer_card()
+with right:
+    top_products_card()
+
+data_explorer_card()
     customer_card()
 with right:
     top_products_card()
