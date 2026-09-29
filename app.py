@@ -570,8 +570,3 @@ with right:
     top_products_card()
 
 data_explorer_card()
-    customer_card()
-with right:
-    top_products_card()
-
-data_explorer_card()
